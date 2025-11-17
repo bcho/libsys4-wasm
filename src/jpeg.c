@@ -16,10 +16,12 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include <turbojpeg.h>
 #include "system4.h"
 #include "system4/cg.h"
 #include "system4/jpeg.h"
+
+#ifdef HAVE_JPEG
+#include <turbojpeg.h>
 
 bool jpeg_cg_checkfmt(const uint8_t *data)
 {
@@ -70,3 +72,24 @@ void jpeg_cg_extract(const uint8_t *data, size_t size, struct cg *cg)
 cleanup:
 	tjDestroy(decompressor);
 }
+
+#else
+// Stub implementations when JPEG support is not available
+
+bool jpeg_cg_checkfmt(const uint8_t *data)
+{
+	return false;
+}
+
+bool jpeg_cg_get_metrics(const uint8_t *data, size_t size, struct cg_metrics *dst)
+{
+	WARNING("JPEG support not available");
+	return false;
+}
+
+void jpeg_cg_extract(const uint8_t *data, size_t size, struct cg *cg)
+{
+	WARNING("JPEG support not available");
+}
+
+#endif

@@ -2,10 +2,15 @@ cmake_minimum_required(VERSION 3.14...4.0)
 project(libsys4 LANGUAGES C)
 set(CMAKE_C_STANDARD 11)
 
-find_package(ZLIB REQUIRED)
-find_package(libjpeg-turbo REQUIRED)
-find_package(WebP REQUIRED)
-find_package(PNG REQUIRED)
+# EMSCRIPTEN target option
+option(EMSCRIPTEN "Build for WebAssembly using Emscripten" OFF)
+
+if(NOT EMSCRIPTEN)
+  find_package(ZLIB REQUIRED)
+  find_package(libjpeg-turbo REQUIRED)
+  find_package(WebP REQUIRED)
+  find_package(PNG REQUIRED)
+endif()
 
 find_package(FLEX)
 find_package(BISON)
@@ -13,6 +18,11 @@ find_package(BISON)
 add_library(sys4 STATIC)
 
 target_compile_definitions(sys4 PRIVATE _DEFAULT_SOURCE)
+
+if(NOT EMSCRIPTEN)
+  target_compile_definitions(sys4 PRIVATE HAVE_JPEG HAVE_WEBP HAVE_PNG)
+endif()
+
 target_include_directories(sys4 PUBLIC include PRIVATE src)
 
 target_sources(sys4 PRIVATE
@@ -62,8 +72,14 @@ target_sources(sys4 PRIVATE
   ${BISON_ini_parser_OUTPUTS}
   )
 
-target_link_libraries(sys4 PRIVATE
-  m ZLIB::ZLIB libjpeg-turbo::turbojpeg-static WebP::webp PNG::PNG)
+if(EMSCRIPTEN)
+  # Use Emscripten's port system for zlib
+  target_compile_options(sys4 PRIVATE -sUSE_ZLIB=1)
+  target_link_options(sys4 INTERFACE -sUSE_ZLIB=1)
+else()
+  target_link_libraries(sys4 PRIVATE
+    m ZLIB::ZLIB libjpeg-turbo::turbojpeg-static WebP::webp PNG::PNG)
+endif()
 
 if (ANDROID)
   target_link_libraries(sys4 PRIVATE log)

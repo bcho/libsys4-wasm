@@ -1,2 +1,4 @@
 build
+build-wasm
+emsdk
 .dir-locals.el

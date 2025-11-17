@@ -16,7 +16,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <webp/decode.h>
 
 #include "system4.h"
 #include "system4/ald.h"
@@ -25,6 +24,10 @@
 #include "system4/webp.h"
 
 #include "little_endian.h"
+
+#ifdef HAVE_WEBP
+#include <webp/decode.h>
+#include <webp/encode.h>
 
 bool webp_checkfmt(const uint8_t *data)
 {
@@ -115,11 +118,6 @@ void webp_extract(uint8_t *data, size_t size, struct cg *cg, struct archive *ar)
 	cg_free(base_cg);
 }
 
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <webp/encode.h>
-
 int webp_write(struct cg *cg, FILE *f)
 {
 	uint8_t *out;
@@ -151,3 +149,34 @@ void webp_save(const char *path, uint8_t *pixels, int w, int h, bool alpha)
 	fclose(f);
 	WebPFree(output);
 }
+
+#else
+// Stub implementations when WebP support is not available
+
+bool webp_checkfmt(const uint8_t *data)
+{
+	return false;
+}
+
+void webp_get_metrics(uint8_t *data, size_t size, struct cg_metrics *m)
+{
+	WARNING("WebP support not available");
+}
+
+void webp_extract(uint8_t *data, size_t size, struct cg *cg, struct archive *ar)
+{
+	WARNING("WebP support not available");
+}
+
+int webp_write(struct cg *cg, FILE *f)
+{
+	WARNING("WebP support not available");
+	return 0;
+}
+
+void webp_save(const char *path, uint8_t *pixels, int w, int h, bool alpha)
+{
+	WARNING("WebP support not available");
+}
+
+#endif

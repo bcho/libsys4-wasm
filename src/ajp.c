@@ -17,14 +17,20 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <turbojpeg.h>
-#include <webp/decode.h>
 #include <zlib.h>
 #include "little_endian.h"
 #include "system4.h"
 #include "system4/cg.h"
 #include "system4/pms.h"
 #include "system4/webp.h"
+
+#ifdef HAVE_JPEG
+#include <turbojpeg.h>
+#endif
+
+#ifdef HAVE_WEBP
+#include <webp/decode.h>
+#endif
 
 bool ajp_checkfmt(const uint8_t *data)
 {
@@ -81,6 +87,7 @@ static uint8_t *read_mask(uint8_t *pixels, uint8_t *mask_data, struct ajp_header
 {
 	if (ajp->mask_size && pms8_checkfmt(mask_data)) {
 		return pms_extract_mask(mask_data, ajp->mask_size);
+#ifdef HAVE_WEBP
 	} else if (ajp->mask_size && webp_checkfmt(mask_data)) {
 		int w, h;
 		uint8_t *tmp = WebPDecodeRGBA(mask_data, ajp->mask_size, &w, &h);
@@ -96,6 +103,7 @@ static uint8_t *read_mask(uint8_t *pixels, uint8_t *mask_data, struct ajp_header
 		}
 		WebPFree(tmp);
 		return mask;
+#endif
 	} else if (mask_data[0] == 0x78) {
 		// compressed
 		unsigned long uncompressed_size = ajp->width * ajp->height;
@@ -138,6 +146,7 @@ static uint8_t *load_mask(uint8_t *pixels, uint8_t *mask_data, struct ajp_header
 
 void ajp_extract(const uint8_t *data, size_t size, struct cg *cg)
 {
+#ifdef HAVE_JPEG
 	uint8_t *buf = NULL, *jpeg_data = NULL, *mask_data = NULL;
 	int width, height, subsamp;
 	struct ajp_header ajp;
@@ -191,4 +200,7 @@ cleanup:
 	free(jpeg_data);
 	free(mask_data);
 	tjDestroy(decompressor);
+#else
+	WARNING("AJP support not available (requires JPEG support)");
+#endif
 }

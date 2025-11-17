@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <png.h>
 
 #include "system4.h"
 #include "system4/ald.h"
@@ -26,6 +25,9 @@
 #include "system4/png.h"
 
 #include "little_endian.h"
+
+#ifdef HAVE_PNG
+#include <png.h>
 
 bool png_cg_checkfmt(const uint8_t *data)
 {
@@ -233,4 +235,31 @@ cleanup:
 		png_destroy_write_struct(&png_ptr, info_ptr ? &info_ptr : NULL);
 	return r;
 }
+
+#else
+// Stub implementations when PNG support is not available
+
+bool png_cg_checkfmt(const uint8_t *data)
+{
+	return false;
+}
+
+bool png_cg_get_metrics(const uint8_t *data, size_t size, struct cg_metrics *dst)
+{
+	WARNING("PNG support not available");
+	return false;
+}
+
+void png_cg_extract(const uint8_t *data, size_t size, struct cg *cg)
+{
+	WARNING("PNG support not available");
+}
+
+int png_cg_write(struct cg *cg, FILE *f)
+{
+	WARNING("PNG support not available");
+	return 0;
+}
+
+#endif
 
