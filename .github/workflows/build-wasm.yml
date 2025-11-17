@@ -1,0 +1,55 @@
+name: Build and Publish WASM
+
+on:
+  push:
+    branches:
+      - wasm
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - wasm
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-wasm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential python3
+
+      - name: Clone Emscripten SDK
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install latest
+          ./emsdk activate latest
+
+      - name: Build WASM
+        run: |
+          source emsdk/emsdk_env.sh
+          chmod +x build_wasm.sh
+          ./build_wasm.sh
+
+      - name: Create archive
+        run: |
+          mkdir -p package/lib package/include
+          cp build-wasm/libsys4.a package/lib/
+          cp -r include/* package/include/
+          tar -czf libsys4-wasm.tar.gz -C package .
+          mv libsys4-wasm.tar.gz build-wasm/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: libsys4-wasm
+          path: build-wasm/libsys4-wasm.tar.gz
+          retention-days: 30
