@@ -47,20 +47,19 @@ jobs:
 
       - name: Create archive
         run: |
-          mkdir -p package/lib package/include package/test
+          mkdir -p package/lib package/include
           cp build-wasm/libsys4.a package/lib/
           cp -r include/* package/include/
+
+          mkdir -p package/test
           cp build-wasm/test/sys4-validate.wasm package/test/
-          cp build-wasm/test/sys4-validate.js package/test/
           cp test/sys4-validate.html package/test/
           cp test/test-validate.js package/test/
           cp test/README.md package/test/
-          tar -czf libsys4-wasm.tar.gz -C package .
-          mv libsys4-wasm.tar.gz build-wasm/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: libsys4-wasm
-          path: build-wasm/libsys4-wasm.tar.gz
+          path: package
           retention-days: 30
